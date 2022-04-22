@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <link href="../favicon.png" rel="shortcut icon" />
+    <title> CMSC 838C Project </title>
+    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="../main.css" />
+</head>
+
+<body>
+    <!-- SECTION: HEADER -->
+    <div class="n-header">
+    </div>
+    <div class="n-title">
+        <h1>CMSC 838C Project Progress</h1>
+    </div>
+    <!-- SECTION: AUTHORS -->
+    <div class="n-byline">
+        <div class="byline">
+			<a href="../index.html">Project Page</a>
+        </div>
+    </div>
+    <!-- SECTION: MAIN BODY -->
+    <div class="n-article">
+		<p><h2>Neural Light Field Rendering in Augmented Reality</h2></p>
+		<p><h3>Light Field Data</h3></p>
+		<p>I created a synthetic light field consisting of 64x64 views of 512x512x3 RGB color images of a 3D object. Although I used a light field of a synthetic scene, this project is specifically useful for real scenes because meshes, materials, and lighting are not easily accessible, whereas it is relatively easy to capture a set of images with cameras. The reason for the use of a synthetic scene is the simplicity and flexibility in terms of the camera parameters, however, the methodology can also be applied to the real scene light fields. I placed the cameras uniformly on a spherical coordinate system where the radial distance to the origin of the 3D object is 1, the polar angle ranges from -41.25° to 41.25°, and the azimuthal angle ranges from -82.5° to 82.5°. Cameras have a field of view of 35°. Examples of various views of the object are shown below.</p>
+		<div class="image-text">
+            <div class="image-text--image">
+                <img src="views.png" class="main-image" />
+            </div>
+		</div>
+		<p>The uncompressed dataset requires 3 GB of memory to process the light field, making it inefficient to use in mobile XR applications. One of the main goals of this project is to effectively compress it using implicit neural representations (INR).</p>
+		<p><h3>Implicit Neural Representation</h3></p>
+		<div class="image-text">
+			<div>
+				<p>The light field is defined by the angular coordinates (u,v) that represent the position on the spherical coordinate system with a UV-sphere, and spatial coordinates (x,y) to denote the pixel position. I used a sinusoidal representation network (SIREN) to map these coordinates to the pixel colors. The neural network I used has 3 hidden layers with 1024 hidden features and it is trained with L1 loss using an ADAM optimizer with a learning rate of 10<sup>-4</sup> and a batch size of 10<sup>5</sup> pixels. Renders from this neural network are shown on the right.</p>
+			</div>
+            <div class="image-text--image">
+                <video autoplay loop muted> <source src="model.mp4" type="video/mp4" /> </video>
+            </div>
+        </div>
+		<p>This neural network only requires 24 MB GPU memory to load the model which represents the entire light field with an additional 7 MB GPU memory to query during runtime. Therefore it achieves a compression ratio of approximately 10<sup>5</sup>:1. However, the rendered images are blurry and suffer from visual artifacts. One of the goals of this project is to investigate approaches to improve the visual quality while keeping the model lightweight.</p>
+		<p><h3>Realtime Rendering in Unity</h3></p>
+		<p>Although the neural network renders a 256x256 image within 3ms in an optimized machine learning framework, I noticed significantly lower performances in Unity. To render the same image in Unity, it takes 275 ms. Based on that, I first considered rendering a lower resolution image as a comparison. Moreover, I developed a sampling methodology that queries pixels with a lower sampling rate where the query positions are selected using a grid pattern. With this pattern, only 25% of pixels are queried every frame, and the image is formed over 4 frames. This leads to substantial increase in frames per second (FPS), however, changes in the viewing direction between frames can cause artifacts if this sampling method is used.</p>
+		<div class="image-text">
+			<div>
+				<p></p>
+				<p>Resolution: 256x256</p>
+				<p>2<sup>16</sup> samples per second</p>
+				<p>3 FPS</p>
+			</div>
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="256-full.mp4" type="video/mp4" /> </video>
+			</div>
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="256-grid.mp4" type="video/mp4" /> </video>
+			</div>
+			<div>
+				<p></p>
+				<p>Resolution: 256x256</p>
+				<p>2<sup>14</sup> samples per second</p>
+				<p>15 FPS</p>
+			</div>
+		</div>
+		<div class="image-text">
+			<div>
+				<p></p>
+				<p>Resolution: 128x128</p>
+				<p>2<sup>14</sup> samples per second</p>
+				<p>15 FPS</p>
+			</div>
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="128-full.mp4" type="video/mp4" /> </video>
+			</div>
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="128-grid.mp4" type="video/mp4" /> </video>
+			</div>
+			<div>
+				<p></p>
+				<p>Resolution: 128x128</p>
+				<p>2<sup>12</sup> samples per second</p>
+				<p>50 FPS</p>
+			</div>
+		</div>
+    </div>
+	<div class="n-footer">
+    </div>
+</body>
+
+</html>
