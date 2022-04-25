@@ -86,6 +86,13 @@
 				<p>50 FPS</p>
 			</div>
 		</div>
+		<p><h3>HoloLens 2 Rendering</h3></p>
+		<p>I imported the neural model in an XR scene to be displayed using HoloLens 2. This model produces 128x128 images for the object with the sampling method as mentioned earlier. I observed that even without any meshes or 3D information, the visuals create the illusion that a 3D object is in the scene. Therefore, this approach allows us to easily transfer objects in real scenes to the virtual scenes by simple capturing a set of images. Currently, the object rotates periodically to display different views. This will be replaced by a method that calculates the spherical coordinates based on the user's view direction and sends those coordinates to the neural network to render the correct view. Moreover, I plan to introduce more interactivity based on manipulation with hands.  </p>
+		<div class="image-text">
+            <div class="image-text--image">
+                <video autoplay loop muted width="700"> <source src="hololens.mp4" type="video/mp4" /> </video>
+            </div>
+		</div>
     </div>
 	<div class="n-footer">
     </div>
