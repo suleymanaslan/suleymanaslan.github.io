@@ -45,7 +45,7 @@
         </div>
 		<p>This neural network only requires 24 MB GPU memory to load the model which represents the entire light field with an additional 7 MB GPU memory to query during runtime. Therefore it achieves a compression ratio of approximately 10<sup>5</sup>:1. However, the rendered images are blurry and suffer from visual artifacts. One of the goals of this project is to investigate approaches to improve the visual quality while keeping the model lightweight.</p>
 		<p><h3>Realtime Rendering in Unity</h3></p>
-		<p>Although the neural network renders a 256x256 image within 3ms in an optimized machine learning framework, I noticed significantly lower performances in Unity. To render the same image in Unity, it takes 275 ms. Based on that, I first considered rendering a lower resolution image as a comparison. Moreover, I developed a sampling methodology that queries pixels with a lower sampling rate where the query positions are selected using a grid pattern. With this pattern, only 25% of pixels are queried every frame, and the image is formed over 4 frames. This leads to substantial increase in frames per second (FPS), however, changes in the viewing direction between frames can cause artifacts if this sampling method is used.</p>
+		<p>Although the neural network renders a 256x256 image within 3ms in an optimized machine learning framework (PyTorch), I noticed significantly lower performances in Unity using Barracuda library. To render the same image in Unity, it takes 275 ms. Based on that, I first considered rendering a lower resolution image as a comparison. Moreover, I developed a sampling methodology that queries pixels with a lower sampling rate where the query positions are selected using a 2x2 grid pattern. With this pattern, only 25% of pixels are queried every frame, and the image is formed over 4 frames. This leads to substantial increase in frames per second (FPS), however, changes in the viewing direction between frames can cause artifacts if this sampling method is used.</p>
 		<div class="image-text">
 			<div>
 				<p></p>
@@ -87,12 +87,20 @@
 			</div>
 		</div>
 		<p><h3>HoloLens 2 Rendering</h3></p>
-		<p>I imported the neural model in an XR scene to be displayed using HoloLens 2. This model produces 128x128 images for the object with the sampling method as mentioned earlier. I observed that even without any meshes or 3D information, the visuals create the illusion that a 3D object is in the scene. Therefore, this approach allows us to easily transfer objects in real scenes to the virtual scenes by simple capturing a set of images. Currently, the object rotates periodically to display different views. This will be replaced by a method that calculates the spherical coordinates based on the user's view direction and sends those coordinates to the neural network to render the correct view. Moreover, I plan to introduce more interactivity based on manipulation with hands.  </p>
+		<p>I imported the neural model in an XR scene to be displayed using HoloLens 2. This model produces 128x128 images for the object with the sampling method as mentioned earlier. I observed that even without any meshes or 3D information, the visuals create the illusion that a 3D object is in the scene. Therefore, this approach allows us to easily transfer objects in real scenes to the virtual scenes by capturing a set of images. In this example, the angular coordinates change periodically to display different views.</p>
 		<div class="image-text">
             <div class="image-text--image">
                 <video autoplay loop muted width="700"> <source src="hololens.mp4" type="video/mp4" /> </video>
             </div>
 		</div>
+		<p><h3>Improvements & Ideas to Explore</h3></p>
+		<ul>
+		  <li>Calculate the angular coordinates based on the view direction of the user by projecting the direction vector onto the UV-sphere and query the network with these coordinates to obtain the correct viewpoint.</li>
+		  <li>Convert forward facing light field to a 360-degree light field.</li>
+		  <li>Demonstrate effectiveness using real scenes with a set of images captured using a calibrated camera array.</li>
+		  <li>Most of the queried pixels are black. Identifying and eliminating those coordinates before querying the network will improve the performance.</li>
+		  <li>Add interactivity based on manipulation with hands. One idea is to use another UV-sphere that the user can rotate to change the angular coordinates without moving.</li>
+		</ul>
     </div>
 	<div class="n-footer">
     </div>
