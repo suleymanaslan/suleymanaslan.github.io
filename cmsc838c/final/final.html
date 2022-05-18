@@ -41,7 +41,66 @@
 				<video autoplay loop muted height="128"> <source src="lf-scene.mp4" type="video/mp4" /> </video>
 			</div>
 		</div>
-
+		<p><h3>Limitations & Challenges</h3></p>
+		<p>Although we can use these advanced implicit neural representation methods to model scenes and models, demonstrating practical use cases is often lacking. Moreover, most light field displays are not mobile and the user interaction is often neglected. For these reasons, I make use of INRs to provide an efficient compressed representations of light fields and to render light fields in Augmented Reality (AR) using these representations. This is potentially useful for displaying 3D information from real scenes in virtual environments, where the users can directly interact with the light fields.</p>
+		<p>One challenge is that the inferencing still requires significant computational resources. INRs provide excellent compression capabilies, however decoding the viewpoints by computing the forward pass with the spatio-angular coordinates at runtime in realtime is not straight-forward. Baseline methods fail to achieve realtime inferencing speed. In order to alleviate this problem, I utilize a dynamic sampling method which significantly reduces the number of samples to query the network while still obtaining the full image.</p>
+		<p>Another challenge is related to capturing high frequency detail. Usually, neural networks tend to learn the low frequency detail because it is an easier and faster way to learn the data and minimize the error. However, this behavior causes blurry outputs for image synthesis tasks. For the representation networks, NeRF uses positional encodings, Sinusoidal Representation Network (SIREN) uses periodic activations, and SIGNET uses Gegenbauer polynomials to capture high frequency detail. In this project, I build upon SIREN, which leverages periodic activations, however, they are still not sufficient to obtain high quality images. I exploit the compression capabilities of INRs, and decompose the spatio-angular coordinate space and use multiple networks to further improve the visual quality.</p>
+		<p><h3>Methodology</h3></p>
+		<p>First, I create a synthetic 360-degree inward facing light field consisting of 64x64 views of 512x512x3 RGB color images of a 3D object. Although I used a light field of a synthetic scene, this project is specifically useful for real scenes because meshes, materials, and lighting are not easily accessible, whereas it is relatively easy to capture a set of images with cameras. The reason for the use of a synthetic scene is the simplicity and flexibility in terms of the camera parameters, however, the methodology can also be applied to the real scene light fields. I placed the cameras uniformly on a spherical coordinate system where the radial distance to the origin of the 3D object is 1, the polar angle ranges from -80° to 80°, and the azimuthal angle ranges from -180° to 180°. Cameras have a field of view of 60°. Examples of various views of the object are shown below.</p>
+		<div class="image-text">
+            <div class="image-text--image">
+                <img src="views-360.png" class="main-image" />
+            </div>
+		</div>
+		<p>The uncompressed dataset requires 3 GB of memory to process the light field, making it inefficient to use in most XR applications. In this project, I effectively compress it using INRs, with a variant of SIREN. The light field is defined by the angular coordinates (u,v) that represent the position on the spherical coordinate system with a UV-sphere, and spatial coordinates (x,y) to denote the pixel position. The INR maps these coordinates to the pixel colors. Note that, it is possible to create a less than 360-degree forward facing light field with the same angular resolution (64x64). However, since INRs depend on the complexity of the signal and a 360-degree light field has higher complexity due to the increased variation between the viewpoints, it is more challenging to obtain a high quality INR for a 360-degree light field. Because of this reason, using a baseline INR is not able to capture the high frequency detail. I focus on reducing the complexity, which indirectly increases visual quality, by creating subregions in the spatio-angular space and parameterizing each subspace with separate neural networks. Therefore, instead of having a single large neural network to parameterize the entire spatio-angular space, I use a combination of subnetworks that independently represent their corresponding input domain. This improves the visual quality, however using multiple networks also increase the GPU memory requirements. Given that these networks are significantly smaller than the light field and provide efficient compression, I found that the increased memory requirements does not have a significant impact. Each subnetwork has 3 hidden layers with 1024 hidden features and they are trained with L1 loss using ADAM optimizers with a learning rate of 10<sup>-4</sup> and a batch size of 10<sup>5</sup> pixels.</p>
+		<p>I compare my method with the baseline, and show improvements over PSNR and SSIM values. The baseline INR achieves an average PSNR of 29.61 and an average SSIM of 0.93 over 4096 viewpoints. In comparison, my method achieves an average PSNR of 33.29 and an average SSIM of 0.97 over 4096 viewpoints. A comparision is given below, where the baseline INR is shown on the left and my INR is shown on the right. The baseline requires 12 MB GPU memory, whereas mine requires 192 MB GPU memory. Inference time stays the same.</p>
+		<div class="image-text">
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="baseline-quality.mp4" type="video/mp4" /> </video>
+			</div>
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="improved-quality.mp4" type="video/mp4" /> </video>
+			</div>
+		</div>
+		<p>I perform realtime rendering for my INR to effectively display in AR. Although the INR renders a 256x256 image within 7ms in an optimized machine learning framework such as PyTorch, I notice significantly lower performances in Unity using Barracuda library. To render the same image in Unity, it takes 275 ms. Based on that, I use a Python-Unity interface with ZeroMQ sockets for two-way communication with a request-reply pattern. Unity acts as a client and sends the input parameters denoting the angular coordinates to the server. The server runs the INR in PyTorch with the received input parameters, renders the image for the viewpoint, and sends the textures back to Unity. With this approach, I am able to improve the framerate from 3 FPS to 55 FPS.</p>
+		<p>Additionally, I use a dynamic sampling method to further improve the performance. I notice that most of the queried pixels do not change color between frames, therefore I identify and eliminate those coordinates before querying the network to improve the performance. My method uses the temporal information based on the past frames to predict pixels that will change color and only sample these coordinates from the INR. This sampling method, in conjunction with the Python-Unity interface, achieves 120 FPS.</p>
+		<p>A visualization of the sampling method is given below. As a baseline (shown on the left) I sample every pixel at every frame, which redundantly samples pixels even if there is no new information. In comparison, the sampling method (shown on the right) accurately predicts the positions of the new pixels, speeding up the inferencing.</p>
+		<div class="image-text">
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="sampling-baseline.mp4" type="video/mp4" /> </video>
+			</div>
+			<div class="image-text--image">
+				<video autoplay loop muted width="256"> <source src="sampling-predict.mp4" type="video/mp4" /> </video>
+			</div>
+		</div>
+		<div class="image-text">
+			<div>
+				<p>The 2D angular coordinates calculated in Unity depend on the users' view direction. Therefore, I project the 3D view direction vector of the user onto a 2D UV-sphere centered at the image texture. Given two angular coordinates (u,v), the point in the 3D space is calculated by stacking circles with different radii using sine and cosine. After finding the corresponding 3D point for the view direction on this UV-sphere, using inverse trigonometric functions projects these 3D points to 2D angular coordinates. A visualization is shown on the right. Note that, the UV-sphere is defined in 2D, however, it is shown in 3D with the projection.</p>
+			</div>
+            <div class="image-text--image">
+                <video autoplay loop muted width="300"> <source src="uv-sphere.mp4" type="video/mp4" /> </video>
+            </div>
+		</div>
+		<p>By combining all of these methods, I render the light field in AR using HoloLens 2 with MRTK. The server produces 256x256 images for the object with the sampling method as mentioned earlier. I observe that even without any meshes or 3D information, the visuals create the illusion that a 3D object is in the scene. Therefore, this approach allows us to easily transfer objects in real scenes to the virtual scenes by capturing a set of images. An example is shown below, where I walk around the object and move it up and down to observe different viewpoints. The hand tracking and the object interactions are provided by MRTK.</p>
+		<div class="image-text">
+            <div class="image-text--image">
+                <video autoplay loop muted width="700"> <source src="hololens-demo-ar.mp4" type="video/mp4" /> </video>
+            </div>
+		</div>
+		<p>I also introduce interactivity based on manipulation with hands. I use another UV-sphere that is visible to the user, and the user can rotate it to change the angular coordinates without moving. Basically, it provides offsets to angular coordinates. An example is shown below.</p>
+		<div class="image-text">
+            <div class="image-text--image">
+                <video autoplay loop muted width="700"> <source src="hololens-demo-interaction.mp4" type="video/mp4" /> </video>
+            </div>
+		</div>
+		<p>Finally, I show another example where I both walk around the object and use the visible UV-sphere to change the viewpoints. Combining angular coordinates obtained by the UV projection with the (u,v) offsets from the interactable sphere work seamlessly well.</p>
+		<div class="image-text">
+            <div class="image-text--image">
+                <video autoplay loop muted width="700"> <source src="hololens-demo-final.mp4" type="video/mp4" /> </video>
+            </div>
+		</div>
+		<p><h3>Conclusions & Future Work</h3></p>
+		<p>I provide a mobile, interactable light field display in AR by efficiently compressing them with INRs to render them in realtime at runtime. I address several challenges of the baseline methods, and introduce improvements over both the visual quality as well as the inferencing performance. My methodology is specifically useful for real scenes because meshes, materials, and lighting are not easily accessible, however, it is relatively easy to capture a set of images with cameras. Therefore, the 3D information from real scenes can be effectively and efficiently displayed in virtual environments by obtaining 360-degree or partial light fields and defining them with implicit neural representations.</p>
     </div>
 	<div class="n-footer">
     </div>
