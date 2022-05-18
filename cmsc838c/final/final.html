@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="" xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1" name="viewport" />
+    <link href="../favicon.png" rel="shortcut icon" />
+    <title> CMSC 838C Project </title>
+    <link rel="stylesheet" href="../../style.css" />
+    <link rel="stylesheet" href="../main.css" />
+</head>
+
+<body>
+    <!-- SECTION: HEADER -->
+    <div class="n-header">
+    </div>
+    <div class="n-title">
+        <h1>CMSC 838C Final Project</h1>
+    </div>
+    <!-- SECTION: AUTHORS -->
+    <div class="n-byline">
+        <div class="byline">
+			<a href="../index.html">Project Page</a>
+        </div>
+    </div>
+    <!-- SECTION: MAIN BODY -->
+    <div class="n-article">
+		<p><h2>Neural Light Field Rendering in Augmented Reality</h2></p>
+		<p><h3><a href="https://umd0-my.sharepoint.com/:p:/g/personal/aslan_umd_edu/EcY8c4oY3CVOszUAmUMj68AB4bhQZo1tFMqxzqBKbMu9Xg?e=0KlCRs"" target="_blank"><i>Click here for the online Final Project Presentation</i></a></h3></p>
+		<p><h3><a href="https://github.com/suleymanaslan/unity-neural-light-fields"" target="_blank"><i>Click here for the source code</i></a></h3></p>
+		<p><h3>Introduction, Motivation & Background</h3></p>
+		<p>We are interested in modeling 3D scens and objects with implicit neural representations (INRs). Conventionally, the representations of various signals such as images, 3D shapes, and audio are based on discrete representations such as a 2D grid of pixels to represent an image, point clouds or meshes or voxels to define a 3D shape, and samples of amplitudes for an audio. Alternatively, we can define signals with a functional representation, where we map the domain of the signal to the quantities of interest with a continuous function. We can define the domain by a coordinate space with arbitrary dimensions. For the image example, the coordinates define the pixel positions in two dimensions and the quantity is whatever we are interested in, such as the RGB color of the pixel, a vector in a normal map, or the intensity for monochromatic images in the non-visible spectrum. One challenge with obtaining such a functional representation is that the mapping function is not analytically tractable. However, we can parameterize the mapping function by a neural network and approximate the function by learning from existing data. As a result, we define an implicit neural representation to represent the signals, such as images, audio, light fields, etc.</p>
+		<p>The implicit neural representations have some benefits over the conventional, discrete representations. INRs are not coupled with the resolution in the input domain, similar to vector images. Memory and computational requirements only scale with the complexity of the signal, instead of the resolution. Implicit neural representations are differentiable, allowing the use of machine learning or other optimization methods in the input domain. Moreover, a signal can be parameterized in higher dimensions without incurring any additional cost, assuming that the complexity of the signal is constant. Conventionally, memory and storage requirements grow rapidly with the resolution in higher dimensions, therefore INRs can provide efficient compression, storage, and transmission, especially if the complexity of the signal is not dependent on the number of dimensions.</p>
+		<p> There are various approaches to define a 3D scene or object with INRs. We may define a 3D-structured representation where we map the 3D coordinates to the quantities. Since we are modeling the entire volume, we can perform volumetric rendering. However, the representation itself is not enough to render the images, which means that we have to use a ray-based neural renderer. In addition, we need information on the ray direction within the data which can be a potentially important constraint. Moreover, if we want to represent a wavefront without rays, or if the ray direction is lacking due to some sensor or other limitations, we can't use these 3D-structured representations. Some examples are Scene Representation Networks (SRNs) and Neural Radiance Fields (NeRF). Alternatively, we can represent the scene with light fields. Light fields are effective representations of 3D scenes and objects, and they have been widely used for displaying 3D visual content. We can encode the full geometry and appearance information within the scenes via 360-degree light fields. For an inward-facing scene, a single 360-degree light field is capable of completely representing the scene, and for forward-facing scenes with a limited field of view (FoV) the light field can be partial, i.e., less than 360-degree. However, for unconstrained scenes, we might need an arbitrarily large number of light fields since we need to observe every point at every direction and there will be occlusions. There are different ways to define the light field, we can use a 4D spatio-angular domain with some basic assumptions, which is also known as the commonly used two-plane parameterization. Our assumption is that the radiance along a ray remains constant and we eliminate one dimension. This assumption holds in most cases, however in some real scenes the radiance might not stay constant because of turbulence. In addition, various camera parameters such as the aperture and depth of field might affect how a ray is captured on the image plane. Instead of the 4D two-plane parameterization, we may also define a slightly more generic 5-dimensional space from the plenoptic function with 3 coordinate values and 2 angles, or we can have the definition in higher dimensions with 3D translation and orientation based on Euler angles, resulting in a 6D definition. If we use quaternions instead of the Euler angles, the light field would be defined in 7D. All of these definitions represent the same light field but as only the complexity of the signal scales the computational cost, we can use these higher dimensions without a major downside. When we use a light field based representation, we don't need a ray-based renderer or require 3D information and it is more efficient in terms of both memory and speed, in comparison to a 3D-structured representation. Some examples are Light Field Networks (LFNs), and Sinusoidal Gegenbauer Network (SIGNET). Below is an example of a 360-degree light field. Basically, we capture a set of images at various viewpoints and using those we can render the scene.</p>
+		<div class="image-text">
+			<div class="image-text">
+				<img src="lf-scene-0.png" height="128" />
+				<img src="lf-scene-1.png" height="128" />
+				<img src="lf-scene-2.png" height="128" />
+				<img src="lf-scene-3.png" height="128" />
+				<video autoplay loop muted height="128"> <source src="lf-scene.mp4" type="video/mp4" /> </video>
+			</div>
+		</div>
+
+    </div>
+	<div class="n-footer">
+    </div>
+</body>
+
+</html>
